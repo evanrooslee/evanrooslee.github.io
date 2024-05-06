@@ -1,0 +1,377 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>The Couplers</title>
+    <link rel="stylesheet" href="style.css" />
+  </head>
+  <body>
+    <nav>
+      <a href="#F">Feature Envy</a>
+      <a href="#I">Inappropriate Intimacy</a>
+      <a href="#M">Message Chain</a>
+      <a href="#MM">Middle Man</a>
+    </nav>
+    <header>
+      <h1>The Couplers</h1>
+    </header>
+    <div class="container">
+      <div class="smell-info">
+        <h2>Apa Itu The Couplers?</h2>
+        <p>
+          <strong>The Couplers</strong> adalah istilah dalam "code smell" di mana terdapat
+          ketergantungan antar class atau module yang tinggi dalam kode sehingga
+          sulit melakukan perubahan pada suatu kode tanpa memengaruhi bagian
+          kode lainnya.
+        </p>
+      </div>
+      <section id="F">
+        <div class="feature-envy">
+          <h2>Feature Envy</h2>
+          <p>
+            <strong>Feature Envy</strong> adalah sebuah code smell yang terjadi
+            jika suatu kelas terlalu mengandalkan data dari kelas lain dan sering
+            menggunakan metode dari kelas tersebut.
+          </p>
+          <p>
+            Pada contoh ini, bisa dilihat bahwa kelas Kuliah memiliki method
+            prosesMahasiswa() yang menggunakan data dari kelas Mahasiswa. Ini
+            menunjukkan bahwa kelas Kuliah lebih menggunakan data dari kelas lain
+            daripada kelasnya sendiri alias <strong>Feature Envy</strong>.
+          </p>
+          <pre>
+            <code>
+              class Kuliah {
+                  private String nama;
+                  private Mahasiswa mahasiswa;
+              
+                  public void prosesMahasiswa() {
+                      if (mahasiswa.getUsia() >= 20) {
+                          System.out.println("Mahasiswa " + mahasiswa.getNama() + " sudah dewasa");
+                      } else {
+                          System.out.println("Mahasiswa " + mahasiswa.getNama() + " masih muda");
+                      }
+                  }
+              }
+
+              class Mahasiswa {
+                  private String nama;
+                  private int usia;
+
+                  public String getNama(){
+                      return nama;
+                  }
+              }
+            </code>
+          </pre>
+          <p>
+            Solusi dari code smell ini adalah dengan memindahkan method prosesMahasiswa()
+            dari kelas Kuliah ke kelas Mahasiswa.
+          </p>
+          <pre>
+            <code>
+              public class Kuliah {
+                  private String nama;
+                  private Mahasiswa mahasiswa;
+              
+                  public void prosesMahasiswa() {
+                      // memindahkan logika ke Mahasiswa
+                      mahasiswa.prosesStatus();
+                  }
+              }
+            
+              public class Mahasiswa {
+                  private String nama;
+                  private int usia;
+              
+                  // method pindah ke sini
+                  public void prosesStatus() {
+                      if (usia >= 20) {
+                          System.out.println("Mahasiswa " + nama + " sudah dewasa");
+                      } else {
+                          System.out.println("Mahasiswa " + nama + " masih muda");
+                      }
+                }
+
+                  public String getNama(){
+                      return nama;
+                  }
+              }
+            </code>
+          </pre>
+        </div>
+      </section>
+      <section id="I">
+        <div>
+          <h2>Inappropriate Intimacy</h2>
+          <p>
+            <strong>Inappropriate Intimacy</strong> adalah sebuah code smell yang
+            terjadi jika suatu kelas dan kelas lain berhubungan terlalu intim
+            sehingga melanggar konsep <strong>Encapsulation</strong> dan
+            <strong>Information Hiding</strong>.
+          </p>
+          <p>
+            Di contoh ini, kelas Dosen memiliki ketergantungan yang tinggi pada kelas
+            Mahasiswa, terlihat dari method-nya beriNilai() yang langsung memanggil method
+            tambahNilai() pada objek Mahasiswa.
+          </p>
+          <pre>
+            <code>
+              class Dosen {
+                  private List<Mahasiswa> daftarMahasiswa;
+              
+                  public void beriNilai(Mahasiswa mahasiswa, Nilai nilai) {
+                      mahasiswa.tambahNilai(nilai);
+                  }
+              }
+
+              class Mahasiswa {
+                  private String nama;
+                  private List<Nilai> daftarNilai;
+              
+                  public void tambahNilai(Nilai nilai) {
+                      daftarNilai.add(nilai);
+                  }
+              }
+            
+              class Nilai {
+                  private String mataKuliah;
+                  private double nilai;
+              }
+            </code>
+          </pre>
+          <p>
+            Refaktornya adalah dengan menambahkan method setMahasiswa() di kelas
+            Nilai. Dengan ini, kita bisa lihat bahwa kelas Dosen hanya memberikan 
+            nilai pada objek Nilai, dan tidak bergantung langsung pada objek
+            Mahasiswa lagi.
+          </p>
+          <pre>
+            <code>
+              class Dosen {
+                public void beriNilai(Mahasiswa mahasiswa, Nilai nilai) {
+                    // Tidak ada lagi ketergantungan langsung
+                    nilai.setMahasiswa(mahasiswa);
+                }
+              }
+
+              class Mahasiswa {
+                  private String nama;
+                  private List<Nilai> daftarNilai;
+              
+                  public void tambahNilai(Nilai nilai) {
+                      daftarNilai.add(nilai);
+                  }
+              }
+
+              class Nilai {
+                private String mataKuliah;
+                private double nilai;
+                private Mahasiswa mahasiswa;
+            
+                public void setMahasiswa(Mahasiswa mahasiswa) {
+                    this.mahasiswa = mahasiswa;
+                }
+              }
+            </code>
+          </pre>
+        </div>
+      </section>
+      <section id="M">
+        <div>
+          <h2> Message Chain</h2>
+          <p>
+            <strong>Message Chain</strong> adalah code smell yang terjadi jika sebuah objek
+            memanggil metode-metode dari objek lain secara beruntun untuk mendapatkan
+            data sehingga membentuk sebuah rantai.
+          </p>
+          <p>
+            Pada contoh di bawah, kita bisa lihat di kelas main terjadi pemanggilan metode
+            yang berantai.
+          </p>
+          <pre>
+            <code>
+              public class Customer {
+                  private Address address;
+              
+                  public Customer(Address address) {
+                      this.address = address;
+                  }
+              
+                  public Address getAddress() {
+                      return address;
+                  }
+              }
+            
+              public class Address {
+                  private City city;
+              
+                  public Address(City city) {
+                      this.city = city;
+                  }
+              
+                  public City getCity() {
+                      return city;
+                  }
+              }
+            
+              public class City {
+                  private String name;
+              
+                  public City(String name) {
+                      this.name = name;
+                  }
+              
+                  public String getName() {
+                      return name;
+                  }
+              }
+              
+              public class Main {
+                  public static void main(String[] args) {
+                      City city = new City("New York");
+                      Address address = new Address(city);
+                      Customer customer = new Customer(address);
+
+                      String cityName = customer.getAddress().getCity().getName(); // message chain
+                      System.out.println("Customer lives in " + cityName);
+                  }
+              }
+            
+            </code>
+          </pre>
+          <p>
+            Salah satu cara memperbaiki code smell ini adalah dengan menambahkan
+            metode getCityName() di kelas Customer. Ini menghilangkan message chain
+            yang ada sebelumnya.
+          </p>
+          <pre>
+            <code>
+              class Customer {
+                  private Address address;
+              
+                  public Customer(Address address) {
+                      this.address = address;
+                  }
+              
+                  public Address getAddress() {
+                      return address;
+                  }
+              
+                  // Metode untuk mendapatkan nama kota langsung dari Customer
+                  public String getCityName() {
+                      return address.getCityName();
+                  }
+              }
+            
+              class Address {
+                  private City city;
+              
+                  public Address(City city) {
+                      this.city = city;
+                  }
+              
+                  public City getCity() {
+                      return city;
+                  }
+              
+                  // method untuk mendapatkan nama kota langsung dari Address
+                  public String getCityName() {
+                      return city.getName();
+                  }
+              }
+              
+              class City {
+                  private String name;
+              
+                  public City(String name) {
+                      this.name = name;
+                  }
+              
+                  public String getName() {
+                      return name;
+                  }
+                }
+                
+              public class Main {
+                  public static void main(String[] args) {
+                      City city = new City("New York");
+                      Address address = new Address(city);
+                      Customer customer = new Customer(address);
+              
+                      // memanggil method getCityName() yang ada di kelas Customer
+                      String cityName = customer.getCityName();
+                      System.out.println("Customer lives in " + cityName);
+                  }
+              }
+            </code>
+          </pre>
+          <p>
+        </div>
+      </section>
+      <section id="MM">
+        <div>
+          <h2> Middle Man</h2>
+          <p>
+            <strong>Middle Man</strong> adalah code smell di mana sebuah kelas fungsinya
+            hanya meneruskan panggilan atau delegasi ke kelas lain saja, dan tidak memiliki
+            behaviour lain. 
+          </p>
+          <p>
+            Pada contoh ini, kita bisa lihat tugas kelas Middleman hanya memanggil metode 
+            dari kelas RealWorker, selain itu tidak ada fungsi lainnya.
+          </p>
+          <pre>
+            <code>
+              public class RealWorker {
+                  public void doWork() {
+                      System.out.println("RealWorker is cooking rn. Let him cook.");
+                  }
+              }
+
+              public class MiddleMan {
+                  private RealWorker realWorker;
+
+                  public MiddleMan() {
+                      this.realWorker = new RealWorker();
+                  }
+
+                  public void doWork() {
+                      realWorker.doWork(); // delegasi panggilan ke RealWorker
+                  }
+              }
+
+              public class Main {
+                  public static void main(String[] args) {
+                      MiddleMan middleMan = new MiddleMan();
+                      middleMan.doWork(); // memanggil method doWork() dari MiddleMan
+                  }
+              }
+            </code>
+          </pre>
+          <p>
+            Cara refactor kode tersebut adalah dengan menghapus kelas MiddleMan,
+            dan langsung memanggil kelas RealWorker jika diperlukan.
+          </p>
+          <pre>
+            <code>
+              class RealWorker {
+                  public void doWork() {
+                      System.out.println("RealWorker is cooking rn. Let him cook.");
+                  }
+              }
+              
+              public class Main {
+                  public static void main(String[] args) {
+                      RealWorker realWorker = new RealWorker();
+                      realWorker.doWork(); // panggil method doWork() langsung dari RealWorker
+                  }
+              }
+            </code>
+          </pre>
+        </div>
+      </section>
+    </div>
+  </body>
+</html>
